@@ -4,7 +4,7 @@ description: |
 outputs:
   sha-short:
     description: short git ref sha
-    value: steps.short-sha.outputs.sha
+    value: ${{ steps.short-sha.outputs.sha }}
 runs:
   using: "composite"
   steps:
