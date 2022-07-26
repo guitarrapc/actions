@@ -1,0 +1,19 @@
+name: "Git Short SHA"
+description: |
+  Get Git Short SHA for PR and others.
+outputs:
+  sha-short:
+    description: short git ref sha
+    value: steps.short-sha.outputs.sha
+runs:
+  using: "composite"
+  steps:
+    - name: git short sha
+      shell: bash
+      id: short-sha
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "::set-output name=sha::$(git rev-parse --short ${{ github.event.pull_request.head.sha }})"
+        else
+          echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+        fi

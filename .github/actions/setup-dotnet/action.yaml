@@ -9,7 +9,6 @@ inputs:
     description: "Restore wasm workload"
     required: false
     default: "false"
-
 runs:
   using: "composite"
   steps:
