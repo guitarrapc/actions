@@ -13,7 +13,9 @@ runs:
       id: short-sha
       run: |
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          echo "::set-output name=sha::$(git rev-parse --short ${{ github.event.pull_request.head.sha }})"
+          sha=$(git rev-parse --short ${{ github.event.pull_request.head.sha }})
         else
-          echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+          sha=$(git rev-parse --short HEAD)
         fi
+        echo "::set-output name=sha::${sha}"
+        echo "sha: ${sha}"
