@@ -5,6 +5,10 @@ inputs:
     description: .NET SDK versions to install
     required: false
     default: "6.0"
+  restore-wasm-workload:
+    description: "Restore wasm workload"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -13,13 +17,40 @@ runs:
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
 
-    - name: "Prepare Environment Variables (.NET SDK)"
+    - name: "Configure Environment Variables (.NET SDK)"
       shell: bash
       run: |
-        echo "MSBUILDDISABLENODEREUSE=1" | tee -a "$GITHUB_ENV"
-        echo "DOTNET_CLI_TELEMETRY_OPTOUT=1" | tee -a "$GITHUB_ENV"
-        echo "DOTNET_NOLOGO=1" | tee -a "$GITHUB_ENV"
-        echo "COMPlus_EnableDiagnostics=0" | tee -a "$GITHUB_ENV"
-        echo "NUGET_XMLDOC_MODE=skip" | tee -a "$GITHUB_ENV"
-        echo "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1" | tee -a "$GITHUB_ENV"
-        echo "TERM=xterm" | tee -a "$GITHUB_ENV"
+        echo "::group::Configure .NET Environment Variables."
+          echo "MSBUILDDISABLENODEREUSE=1" | tee -a "$GITHUB_ENV"
+          echo "DOTNET_CLI_TELEMETRY_OPTOUT=1" | tee -a "$GITHUB_ENV"
+          echo "DOTNET_NOLOGO=1" | tee -a "$GITHUB_ENV"
+          echo "COMPlus_EnableDiagnostics=0" | tee -a "$GITHUB_ENV"
+          echo "NUGET_XMLDOC_MODE=skip" | tee -a "$GITHUB_ENV"
+          echo "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1" | tee -a "$GITHUB_ENV"
+          echo "TERM=xterm" | tee -a "$GITHUB_ENV"
+        echo "::endgroup::"
+
+    - name: Install Wasm workload
+      shell: bash
+      run: |
+        echo "::group::Install wasm workload if needed."
+          if [[ "${{ inputs.restore-wasm-workload }}" == "true" ]]; then
+            dotnet workload install wasm-tools
+          else
+            echo "no need install wasm-tools workload"
+          fi
+        echo "::endgroup::"
+
+    - name: dotnet verseion
+      shell: bash
+      run: |
+        echo "::group::Show dotnet version"
+          dotnet --version
+        echo "::endgroup::"
+
+    - name: List installed .NET SDKs
+      shell: bash
+      run: |
+        echo "::group::List installed dotnet sdks"
+          dotnet --list-sdks
+        echo "::endgroup::"
