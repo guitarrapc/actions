@@ -17,4 +17,4 @@ runs:
         else
           sha=$(git rev-parse --short HEAD)
         fi
-        echo ":sha=${sha}" | tee -a "$GITHUB_OUTPUT"
+        echo "sha=${sha}" | tee -a "$GITHUB_OUTPUT"
