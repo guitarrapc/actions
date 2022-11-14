@@ -41,7 +41,8 @@ runs:
           if [[ "${{ inputs.restore-wasm-workload }}" == "true" ]]; then
             dotnet workload install wasm-tools
             
-            for version in ${{ inputs.dotnet-version }}; do
+            versions=("${{ inputs.dotnet-version }}")
+            for version in ${versions[@]}; do
               if [[ "$version" == "7.0.x" ]]; then
                 dotnet workload install wasm-tools-net6
               fi
