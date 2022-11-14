@@ -9,9 +9,7 @@ on:
         required: false
         type: string
       dotnet-version:
-        default: |
-          6.0.x
-          7.0.x
+        default: 6.0.x
         description: dotnet-version to use
         required: false
         type: string
