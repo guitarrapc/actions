@@ -40,9 +40,12 @@ runs:
         echo "::group::Install wasm workload if needed."
           if [[ "${{ inputs.restore-wasm-workload }}" == "true" ]]; then
             dotnet workload install wasm-tools
-            if [[ "${{ inputs.dotnet-version }}" == "7.0.x" ]]; then
-              dotnet workload install wasm-tools-net6
-            fi
+            
+            for version in ${{ inputs.dotnet-version }}; do
+              if [[ "$version" == "7.0.x" ]]; then
+                dotnet workload install wasm-tools-net6
+              fi
+            done
           else
             echo "no need install wasm-tools workload"
           fi
