@@ -18,10 +18,10 @@ on:
         description: base branch to create PR
         required: false
         type: string
+    secrets:
       token:
         description: github token to use. default is github.token
         required: false
-        type: string
 
 jobs:
   lint:
@@ -94,7 +94,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ inputs.token != '' && inputs.token || github.token }}
+          token: ${{ secrets.token != '' && secrets.token || github.token }}
           base: "${{ inputs.base-branch }}"
           branch: "auto-pr/dotnet-format"
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
