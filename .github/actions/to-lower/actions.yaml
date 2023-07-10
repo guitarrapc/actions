@@ -1,14 +1,14 @@
 name: "To Lowercase"
 description: Lowercase output
 inputs:
-  project:
-    description: "project name"
+  value:
+    description: "value name"
     required: false
     default: ""
 outputs:
-  project:
-    description: "project name in lowercase"
-    value: ${{ steps.project.outputs.lowercase }}
+  value:
+    description: "value name in lowercase"
+    value: ${{ steps.value.outputs.lowercase }}
   repository:
     description: "repository name in lowercase"
     value: ${{ steps.repository.outputs.lowercase }}
@@ -20,7 +20,7 @@ runs:
       id: repository
       shell: bash
 
-    - name: project lowercase
-      run: echo "lowercase=$(echo '${{ inputs.project }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-      id: project
+    - name: value lowercase
+      run: echo "lowercase=$(echo '${{ inputs.value }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      id: value
       shell: bash
