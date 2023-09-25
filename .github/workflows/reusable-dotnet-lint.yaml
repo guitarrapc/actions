@@ -56,7 +56,7 @@ jobs:
             csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
             for item in $csprojs; do exclude_args+="-v $item "; done
           fi
-          echo "argument=$exclude_args" | tee -a "$GIHUB_OUTPUT"
+          echo "argument=$exclude_args" | tee -a "$GITHUB_OUTPUT"
       # dotnet list
       - name: Obtain csproj to lint
         run: |
