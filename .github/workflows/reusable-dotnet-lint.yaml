@@ -51,12 +51,11 @@ jobs:
       - name: Create excludes arguments
         id: exclude-args
         run: |
-          csprojs=""
+          exclude_args=""
           if [[ "${{ inputs.exclude-csprojs }}" != "" ]]; then
             csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
+            for item in $csprojs; do exclude_args+="-v $item "; done
           fi
-          exclude_args=""
-          for item in $csprojs; do exclude_args+="-v $item "; done
           echo "argument=$exclude_args" | tee -a "$GIHUB_OUTPUT"
       # dotnet list
       - name: Obtain csproj to lint
