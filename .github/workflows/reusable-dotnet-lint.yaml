@@ -18,6 +18,23 @@ on:
         description: base branch to create PR
         required: false
         type: string
+      exclude-csprojs:
+        default: ""
+        description: |
+            specify csproj to exclude from format.
+            2 way support.
+              1. specify csproj in single line
+              ```
+              exluce-csprojs: foo.csproj bar.csproj
+              ```
+              2. specify csproj in multi line
+              ```
+              exluce-csprojs: |
+                foo.csproj
+                bar.csproj
+              ```
+        required: false
+        type: string
 
 jobs:
   lint:
@@ -31,29 +48,40 @@ jobs:
           dotnet-version: ${{ inputs.dotnet-version }}
           restore-wasm-workload: "true"
 
+      - name: Create excludes arguments
+        id: exclude-args
+        run: |
+          csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
+          exclude_args=""
+          for item in $csprojs; do exclude_args+="-v $item "; done
+          echo "argument=$exclude_args" | tee -a "$GIHUB_OUTPUT"
       # dotnet list
       - name: Obtain csproj to lint
         run: |
-          projects=$(dotnet sln list | tail -n +3)
+          if [[ "${{ steps.exclude-args.outputs.argument }}" != "" ]]; then
+            projects=$(dotnet sln list | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
+          else
+            projects=$(dotnet sln list | tail -n +3)
+          fi
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
 
           {
             echo "PROJECTS<<EOF"
             echo "${projects}"
             echo "EOF"
-          } >> "$GITHUB_ENV"
+          } | tee -a "$GITHUB_ENV"
           {
             echo "FORMAT_PROJECTS<<EOF"
             echo "${format_projects}"
             echo "EOF"
-          } >> "$GITHUB_ENV"
+          } | tee -a "$GITHUB_ENV"
         working-directory: ${{ inputs.sln-root }}
 
-      # dotnet format is build-in from dotnet 6.0 sdk
+      # dotnet format is build-in from dotnet 6.0 sdk. --exclude is for path, NOT project.
       - name: Dotnet Format
         run: |
           echo "${{ env.PROJECTS }}" | while IFS= read -r csproj; do
-            dotnet format "$csproj" --verbosity diagnostic --exclude "console-fail-tests"
+            dotnet format "$csproj" --verbosity diagnostic
           done
         working-directory: ${{ inputs.sln-root }}
 
@@ -71,7 +99,7 @@ jobs:
             echo "CHANGED_DIRS<<EOF"
             echo "${dirs}"
             echo "EOF"
-          } >> "$GITHUB_ENV"
+          } | tee -a "$GITHUB_ENV"
 
       # get files stats
       - name: List modified files
@@ -82,7 +110,7 @@ jobs:
             echo "CHANGED_FILES<<EOF"
             echo "${files}"
             echo "EOF"
-          } >> "$GITHUB_ENV"
+          } | tee -a "$GITHUB_ENV"
 
       # Commit if change happen, then craete PR. force push when branch/pr already exists.
       - name: Create PullRequest
