@@ -52,7 +52,7 @@ jobs:
         id: exclude-args
         run: |
           csprojs=""
-          if [[ "${{ inputs.exclude-csprojs }}" != "" ]]
+          if [[ "${{ inputs.exclude-csprojs }}" != "" ]]; then
             csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
           fi
           exclude_args=""
