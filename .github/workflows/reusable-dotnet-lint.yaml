@@ -51,7 +51,10 @@ jobs:
       - name: Create excludes arguments
         id: exclude-args
         run: |
-          csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
+          csprojs=""
+          if [[ "${{ inputs.exclude-csprojs }}" != "" ]]
+            csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
+          fi
           exclude_args=""
           for item in $csprojs; do exclude_args+="-v $item "; done
           echo "argument=$exclude_args" | tee -a "$GIHUB_OUTPUT"
