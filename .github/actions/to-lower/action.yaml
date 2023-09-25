@@ -1,0 +1,26 @@
+name: "To Lowercase"
+description: Lowercase output
+inputs:
+  value:
+    description: "value name"
+    required: false
+    default: ""
+outputs:
+  value:
+    description: "value name in lowercase"
+    value: ${{ steps.value.outputs.lowercase }}
+  repository:
+    description: "repository name in lowercase"
+    value: ${{ steps.repository.outputs.lowercase }}
+runs:
+  using: "composite"
+  steps:
+    - name: repository lowercase
+      run: echo "lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      id: repository
+      shell: bash
+
+    - name: value lowercase
+      run: echo "lowercase=$(echo '${{ inputs.value }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      id: value
+      shell: bash
