@@ -66,6 +66,7 @@ jobs:
             projects=$(dotnet sln list | tail -n +3)
           fi
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
+          array_projects=($projects)
 
           {
             echo "PROJECTS<<EOF"
@@ -77,12 +78,15 @@ jobs:
             echo "${format_projects}"
             echo "EOF"
           } | tee -a "$GITHUB_ENV"
+          echo "PROJECT_LENGTH=${#array_projects[@]}" | tee -a "$GITHUB_ENV"
         working-directory: ${{ inputs.sln-root }}
 
       # dotnet format is build-in from dotnet 6.0 sdk. --exclude is for path, NOT project.
       - name: Dotnet Format
         run: |
+          i=0
           echo "${{ env.PROJECTS }}" | while IFS= read -r csproj; do
+            echo "($((i=i+1))/${{ env.PROJECT_LENGTH }}) formatting csproj '$csproj'."
             dotnet format "$csproj" --verbosity diagnostic
           done
         working-directory: ${{ inputs.sln-root }}
@@ -114,7 +118,7 @@ jobs:
             echo "EOF"
           } | tee -a "$GITHUB_ENV"
 
-      # Commit if change happen, then craete PR. force push when branch/pr already exists.
+      # Commit if change happen, then craete PR. force push when ions[botbranch/pr already exists.
       - name: Create PullRequest
         if: steps.git-check.outputs.modified == 'true'
         id: cpr
@@ -122,7 +126,7 @@ jobs:
         with:
           base: "${{ inputs.base-branch }}"
           branch: "auto-pr/dotnet-format"
-          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: github-actions[bot] <41898282+github-act]@users.noreply.github.com>
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           delete-branch: true
           commit-message: "[dotnet format] Automated changes"
@@ -151,6 +155,8 @@ jobs:
             </details>
 
             ## Target Projects
+
+            Target project number is ${{ env.PROJECT_LENGTH }}.
 
             ${{ env.FORMAT_PROJECTS }}
 
