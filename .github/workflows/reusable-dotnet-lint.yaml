@@ -53,8 +53,11 @@ jobs:
         run: |
           exclude_args=""
           if [[ "${{ inputs.exclude-csprojs }}" != "" ]]; then
-            csprojs=$(echo "${${{ inputs.exclude-csprojs }}//$'\n'/ }")
-            for item in $csprojs; do exclude_args+="-v $item "; done
+            exclude_csprojs="${{ inputs.exclude-csprojs }}"
+            IFS=" " read -r -a csprojs <<< "${exclude_csprojs//$'\n'/ }"
+            for item in "${csprojs[@]}"; do
+              exclude_args+="-v $item ";
+            done
           fi
           echo "argument=$exclude_args" | tee -a "$GITHUB_OUTPUT"
       # dotnet list
@@ -66,7 +69,7 @@ jobs:
             projects=$(dotnet sln list | tail -n +3)
           fi
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
-          array_projects=($projects)
+          IFS=" " read -r -a array_projects <<< "${projects}"
 
           {
             echo "PROJECTS<<EOF"
