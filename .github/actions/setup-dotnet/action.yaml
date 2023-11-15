@@ -24,16 +24,19 @@ runs:
         dotnet-version: ${{ inputs.dotnet-version }}
         dotnet-quality: ${{ inputs.dotnet-quality }}
 
+    # GitHub Actions Hosted Runner default environment contains some .NET Environment.
+    # * DOTNET_MUTILEVEL_LOOKUP=0
+    # * DOTNET_NOLOGO=1
+    # * DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
     - name: "Configure Environment Variables (.NET SDK)"
       shell: bash
       run: |
         echo "::group::Configure .NET Environment Variables."
-          echo "MSBUILDDISABLENODEREUSE=1" | tee -a "$GITHUB_ENV"
+          echo "COMPlus_EnableDiagnostics=0" | tee -a "$GITHUB_ENV"
           echo "DOTNET_CLI_TELEMETRY_OPTOUT=1" | tee -a "$GITHUB_ENV"
-          echo "DOTNET_NOLOGO=1" | tee -a "$GITHUB_ENV"
-          echo "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1" | tee -a "$GITHUB_ENV"
-          echo "NUGET_XMLDOC_MODE=skip" | tee -a "$GITHUB_ENV"
           echo "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1" | tee -a "$GITHUB_ENV"
+          echo "MSBUILDDISABLENODEREUSE=1" | tee -a "$GITHUB_ENV"
+          echo "NUGET_XMLDOC_MODE=skip" | tee -a "$GITHUB_ENV"
           echo "TERM=xterm" | tee -a "$GITHUB_ENV"
         echo "::endgroup::"
 
