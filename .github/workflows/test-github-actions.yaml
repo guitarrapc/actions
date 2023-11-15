@@ -46,4 +46,4 @@ jobs:
       - name: Repository name
         run: if [[ "${{ steps.to-lower.outputs.repository }}" != "${{ github.repository }}" ]]; then exit 1; fi
       - name: Test action output
-        run: if [[ "${{ steps.to-lower.outputs.value }}" != "foobar_baz_piyo" ]]; then exit 1; fi
+        run: if [[ "${{ steps.to-lower.outputs.value }}" != "foobar_baz-piyo" ]]; then exit 1; fi
