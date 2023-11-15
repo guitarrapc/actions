@@ -1,0 +1,49 @@
+name: Test GitHub Actions
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+jobs:
+  git-shortsha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/git-shortsha
+        id: git-shortsha
+      - name: Show action output
+        run: echo "${{ steps.git-shortsha.outputs.sha-short }}"
+      - name: Test action output
+        run: if [[ "${{ steps.git-shortsha.outputs.sha-short }}" == "" ]]; then exit 1; fi
+
+  setup-dotnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-dotnet
+      - name: dotnet build
+        run: dotnet build
+        working-directory: sandbox/
+
+  to-lower:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/to-lower
+        id: to-lower
+        with:
+          value: FOOBar_baz-Piyo
+      - name: Show output
+        run: |
+          echo "repository => ${{ steps.to-lower.outputs.repository }}"
+          echo "value      => ${{ steps.to-lower.outputs.value }}"
+      - name: Repository name
+        run: if [[ "${{ steps.to-lower.outputs.repository }}" != "${{ github.repository }}" ]]; exit 1; fi
+      - name: Test action output
+        run: if [[ "${{ steps.to-lower.outputs.value }}" != "foobar_baz_piyo" ]]; exit 1; fi
