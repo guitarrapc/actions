@@ -4,7 +4,10 @@ inputs:
   dotnet-version:
     description: "Optional SDK version(s) to use. If not provided, will install global.json version when available. Examples: 2.2.104, 3.1, 3.1.x, 3.x"
     required: false
-    default: "6.0"
+    default: |
+      6.0.x
+      7.0.x
+      8.0.x
   dotnet-quality:
     description: "Optional quality of the build. The possible values are: daily, signed, validated, preview, ga."
     required: false
@@ -38,21 +41,25 @@ runs:
       shell: bash
       run: |
         echo "::group::Install wasm workload if needed."
-          if [[ "${{ inputs.restore-wasm-workload }}" == "true" ]]; then
+          if [[ "${{ inputs.restore-wasm-workload }}" != "true" ]]; then
+            echo "no need install wasm-tools workload"
+          else
             dotnet workload install wasm-tools
-            
+
             versions=("${{ inputs.dotnet-version }}")
             for version in ${versions[@]}; do
               if [[ "$version" == "7.0.x" ]]; then
                 dotnet workload install wasm-tools-net6
               fi
+              if [[ "$version" == "8.0.x" ]]; then
+                dotnet workload install wasm-tools-net7
+                dotnet workload install wasm-tools-net6
+              fi
             done
-          else
-            echo "no need install wasm-tools workload"
           fi
         echo "::endgroup::"
 
-    - name: dotnet verseion
+    - name: dotnet version
       shell: bash
       run: |
         echo "::group::Show dotnet version"
