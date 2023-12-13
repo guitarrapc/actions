@@ -21,11 +21,18 @@ jobs:
         run: if [[ "${{ steps.git-shortsha.outputs.sha-short }}" == "" ]]; then exit 1; fi
 
   setup-dotnet:
+    strategy:
+      matrix:
+        restore-wasm-workload: ["", "true", "false"]
+        skip-env: ["", "true", "false"]
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-dotnet
+        with:
+          restore-wasm-workload: ${{ matrix.restore-wasm-workload }}
+          skip-env: ${{ matrix.skip-env }}
       - name: dotnet build
         run: dotnet build
         working-directory: sandbox/

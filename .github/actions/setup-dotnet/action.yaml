@@ -11,9 +11,13 @@ inputs:
   dotnet-quality:
     description: "Optional quality of the build. The possible values are: daily, signed, validated, preview, ga."
     required: false
-    default: ga
+    default: ""
   restore-wasm-workload:
     description: "Restore wasm workload"
+    required: false
+    default: "false"
+  skip-env:
+    description: "Optional skip environment set."
     required: false
     default: "false"
 runs:
@@ -29,6 +33,8 @@ runs:
     # * DOTNET_MUTILEVEL_LOOKUP=0
     # * DOTNET_NOLOGO=1
     # * DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+    # Do not set the following environment variables:
+    # * NUGET_XMLDOC_MODE=skip <- pulumi and some other packge restore will fail.
     - name: "Configure Environment Variables (.NET SDK)"
       shell: bash
       run: |
@@ -37,31 +43,28 @@ runs:
           echo "DOTNET_CLI_TELEMETRY_OPTOUT=1" | tee -a "$GITHUB_ENV"
           echo "DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1" | tee -a "$GITHUB_ENV"
           echo "MSBUILDDISABLENODEREUSE=1" | tee -a "$GITHUB_ENV"
-          echo "NUGET_XMLDOC_MODE=skip" | tee -a "$GITHUB_ENV"
           echo "TERM=xterm" | tee -a "$GITHUB_ENV"
         echo "::endgroup::"
+      if: ${{ inputs.skip-env == 'false' }}
 
     - name: Install Wasm workload
       shell: bash
       run: |
         echo "::group::Install wasm workload if needed."
-          if [[ "${{ inputs.restore-wasm-workload }}" != "true" ]]; then
-            echo "no need install wasm-tools workload"
-          else
-            dotnet workload install wasm-tools
+          dotnet workload install wasm-tools
 
-            versions=("${{ inputs.dotnet-version }}")
-            for version in ${versions[@]}; do
-              if [[ "$version" == "7.0.x" ]]; then
-                dotnet workload install wasm-tools-net6
-              fi
-              if [[ "$version" == "8.0.x" ]]; then
-                dotnet workload install wasm-tools-net7
-                dotnet workload install wasm-tools-net6
-              fi
-            done
-          fi
+          versions=("${{ inputs.dotnet-version }}")
+          for version in ${versions[@]}; do
+            if [[ "$version" == "7.0.x" ]]; then
+              dotnet workload install wasm-tools-net6
+            fi
+            if [[ "$version" == "8.0.x" ]]; then
+              dotnet workload install wasm-tools-net7
+              dotnet workload install wasm-tools-net6
+            fi
+          done
         echo "::endgroup::"
+      if: ${{ inputs.restore-wasm-workload != 'false' }}
 
     - name: dotnet version
       shell: bash
