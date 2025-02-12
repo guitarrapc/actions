@@ -55,12 +55,11 @@ runs:
 
           versions=("${{ inputs.dotnet-version }}")
           for version in ${versions[@]}; do
-            if [[ "$version" == "7.0.x" ]]; then
-              dotnet workload install wasm-tools-net6
+            if [[ "$version" == "9.0.x" ]]; then
+              dotnet workload install wasm-tools-net
             fi
             if [[ "$version" == "8.0.x" ]]; then
-              dotnet workload install wasm-tools-net7
-              dotnet workload install wasm-tools-net6
+              dotnet workload install wasm-tools-net8
             fi
           done
         echo "::endgroup::"
