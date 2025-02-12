@@ -10,7 +10,6 @@ on:
         type: string
       dotnet-version:
         default: |
-          6.0.x
           8.0.x
           9.0.x
         description: dotnet-version to use
