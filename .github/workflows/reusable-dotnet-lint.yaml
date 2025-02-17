@@ -103,6 +103,11 @@ jobs:
           done
         working-directory: ${{ inputs.sln-root }}
 
+      # check format may not broken the code.
+      - name: Dotnet Build
+        run: dotnet build
+        working-directory: ${{ inputs.sln-root }}
+
       # is change happen?
       - name: Check for modified files
         id: git-check
