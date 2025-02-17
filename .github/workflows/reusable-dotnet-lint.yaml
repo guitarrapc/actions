@@ -8,10 +8,14 @@ on:
         description: .sln root to execute dotnet-format
         required: false
         type: string
+      # temporary workaround for 9.0.200 https://github.com/dotnet/sdk/issues/46780
       dotnet-version:
         default: |
           8.0.x
-          9.0.x
+          9.0.103
+        # default: |
+        #   8.0.x
+        #   9.0.x
         description: dotnet-version to use
         required: false
         type: string
@@ -85,6 +89,9 @@ jobs:
           } | tee -a "$GITHUB_ENV"
           echo "PROJECT_LENGTH=${#array_projects[@]}" | tee -a "$GITHUB_ENV"
         working-directory: ${{ inputs.sln-root }}
+
+      - name: Add dotnet-format problem matcher
+        uses: xt0rted/dotnet-format-problem-matcher@v1
 
       # dotnet format is build-in from dotnet 6.0 sdk. --exclude is for path, NOT project.
       - name: Dotnet Format
