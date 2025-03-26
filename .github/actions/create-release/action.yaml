@@ -1,0 +1,24 @@
+name: Create release
+description: Create GitHub Release
+inputs:
+  tag:
+    description: "Release tag to create"
+    required: true
+  title:
+    description: "Release title"
+    required: true
+  gh-token:
+    description: "GitHub Token to release"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create Release
+      shell: bash
+      run: gh release create "${TAG}" --title "${TITLE}" --generate-notes --draft
+      env:
+        TAG: ${{ inputs.tag }}
+        TITLE: ${{ inputs.title }}
+        GH_REPO: ${{ github.repository }}
+        GH_TOKEN: ${{ inputs.gh-token }}
