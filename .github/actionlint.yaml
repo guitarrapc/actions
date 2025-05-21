@@ -1,5 +1,6 @@
 paths:
   .github/workflows/**/*.{yml,yaml}:
     ignore:
-      - "shellcheck reported issue in this script: SC2086:.+"
-      - "shellcheck reported issue in this script: SC2013:.+"
+      - "shellcheck reported issue in this script: SC2086:.+" # Double quote to prevent globbing and word splitting.
+      - "shellcheck reported issue in this script: SC2013:.+" # To read lines rather than words, pipe/redirect to a while read loop.
+      - "shellcheck reported issue in this script: SC2129:.+" # Consider using { cmd1; cmd2; } >> file instead of individual redirects
