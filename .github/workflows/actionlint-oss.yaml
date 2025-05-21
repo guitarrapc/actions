@@ -24,18 +24,18 @@ jobs:
       - uses: aquaproj/aqua-installer@9ebf656952a20c45a5d66606f083ff34f58b8ce0 # v4.0.0
         with:
           aqua_version: v2.43.1
-      - name: Clone repositories
-        run: |
-          for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
-            echo "repository=${repository}" | tee -a "$GITHUB_ENV"
-            git clone --depth 1 "${{ github.repository_owner }}/${repository}" "${repository}"
-          done
       # gh repo list guitarrapc --visibility public --no-archived --json name
       - name: List non-archived OSS Repository names as json array
         id: list
         run: gh repo list ${{ github.repository_owner }} --visibility public --no-archived --json name --jq 'sort_by(.name | ascii_downcase) | .[].name' > ${{ github.workspace }}/repositories.txt
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clone repositories
+        run: |
+          for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
+            echo "repository=${repository}" | tee -a "$GITHUB_ENV"
+            git clone --depth 1 "${{ github.repository_owner }}/${repository}" "${repository}"
+          done
       # github workflows/action's Static Checker
       - name: Run actionlint
         run: |
