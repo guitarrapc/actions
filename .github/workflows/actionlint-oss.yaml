@@ -33,7 +33,7 @@ jobs:
     needs: [pre]
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 5
       matrix:
         repository: ${{ fromJson(needs.pre.outputs.repositories) }}
     permissions:
