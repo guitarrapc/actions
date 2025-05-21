@@ -4,36 +4,37 @@ on:
   workflow_call:
     inputs:
       sln-root:
-        default: "."
-        description: .sln root to execute dotnet-format
+        description: .sln root to execute dotnet-format.
+        default: "${{ github.workspace }}"
         required: false
         type: string
-      # temporary workaround for 9.0.200 https://github.com/dotnet/sdk/issues/46780
+      sln-file:
+        description: .sln file to execute dotnet-format. If you have multiple .sln files, you must specify the one you want to use.
+        default: ""
+        required: false
+        type: string
       dotnet-version:
+        description: .NET SDK version to use
         default: |
           8.0.x
           9.0.x
-        # default: |
-        #   8.0.x
-        #   9.0.x
-        description: dotnet-version to use
         required: false
         type: string
       base-branch:
-        default: "main"
-        description: base branch to create PR
+        description: Base branch to create PR
+        default: ${{ github.repository.default_branch }}
         required: false
         type: string
       exclude-csprojs:
         default: ""
         description: |
-            specify csproj to exclude from format.
-            2 way support.
-              1. specify csproj in single line
+            Specify csproj to exclude from format, there are two ways to specify:
+            1. specify csproj in single line
               ```
               exluce-csprojs: foo.csproj bar.csproj
               ```
-              2. specify csproj in multi line
+
+            2. specify csproj in multi line
               ```
               exluce-csprojs: |
                 foo.csproj
@@ -75,9 +76,9 @@ jobs:
       - name: Obtain csproj to lint
         run: |
           if [[ "${{ steps.exclude-args.outputs.argument }}" != "" ]]; then
-            projects=$(dotnet sln list | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
+            projects=$(dotnet sln list ${{ inputs.sln-file }} | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
           else
-            projects=$(dotnet sln list | tail -n +3)
+            projects=$(dotnet sln list ${{ inputs.sln-file }} | tail -n +3)
           fi
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
           IFS=" " read -r -a array_projects <<< "${projects//$'\n'/ }"
