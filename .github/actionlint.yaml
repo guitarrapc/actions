@@ -1,3 +1,8 @@
+self-hosted-runner:
+  # arm is official hosted-runner but cannot handle with actionlint
+  labels:
+    - windows-11-arm
+
 paths:
   .github/workflows/**/*.{yml,yaml}:
     ignore:
