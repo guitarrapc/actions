@@ -12,11 +12,34 @@ on:
     - cron: "0 1 * * WED" # every wednesday 10:00 +9(JST)
 
 jobs:
-  actionlint:
+  pre:
     permissions:
       contents: read
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 3
+    outputs:
+      repositories: ${{ steps.list.outputs.repositories }}
+    steps:
+      # gh repo list guitarrapc --visibility public --no-archived --json name
+      - name: List non-archived OSS Repository names as json array
+        id: list
+        run: echo "repositories=$(gh repo list ${{ github.repository_owner }} --visibility public --no-archived --json name --jq 'sort_by(.name | ascii_downcase) | .[].name' | jq -R -s -c 'split("\n")[:-1]')" | tee -a "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Try json parse (Should output as Array)
+        run: echo "${{ fromJson(steps.list.outputs.repositories) }}"
+
+  actionlint:
+    needs: [pre]
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        repository: ${{ fromJson(needs.pre.outputs.repositories) }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -24,40 +47,19 @@ jobs:
       - uses: aquaproj/aqua-installer@9ebf656952a20c45a5d66606f083ff34f58b8ce0 # v4.0.0
         with:
           aqua_version: v2.43.1
-      # gh repo list guitarrapc --visibility public --no-archived --json name
-      - name: List non-archived OSS Repository names as json array
-        id: list
-        run: gh repo list ${{ github.repository_owner }} --visibility public --no-archived --json name --jq 'sort_by(.name | ascii_downcase) | .[].name' > ${{ github.workspace }}/repositories.txt
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Clone repositories
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
-            echo "repository name: ${repository}"
-            git clone --depth 1 "https://github.com/${{ github.repository_owner }}/${repository}" "${repository}"
-          done
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          repository: "${{ github.repository_owner }}/${{ matrix.repository }}"
+          path: ${{ matrix.repository }}
       # github workflows/action's Static Checker
       - name: Run actionlint
-        run: |
-          for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
-            pushd "${repository}"
-              actionlint -color -oneline --config-file ../.github/actionlint.yaml
-            popd
-          done
+        run: actionlint -color -oneline --config-file ../.github/actionlint.yaml
+        working-directory: ${{ matrix.repository }}
       # checkout's persist-credentials: false checker
       - name: Run ghalint
-        run: |
-          for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
-            pushd "${repository}"
-              ghalint -c ../.ghalint.yaml run
-            popd
-          done
+        run: ghalint -c ../.ghalint.yaml run
+        working-directory: ${{ matrix.repository }}
       - name: Run ghalint
-        run: |
-          for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
-            pushd "${repository}"
-              ghalint -c ../.ghalint.yaml run-action
-            popd
-          done
+        run: ghalint -c ../.ghalint.yaml run-action
+        working-directory: ${{ matrix.repository }}
