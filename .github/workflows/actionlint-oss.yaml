@@ -54,9 +54,6 @@ jobs:
           path: ${{ matrix.repository }}
       # github workflows/action's Static Checker
       - name: Run actionlint
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ -f .github/actionlint.yaml ]]; then
             actionlint -color -oneline
@@ -66,9 +63,6 @@ jobs:
         working-directory: ${{ matrix.repository }}
       # checkout's persist-credentials: false checker
       - name: Run ghalint
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ -f .ghalint.yaml ]]; then
             ghalint run
