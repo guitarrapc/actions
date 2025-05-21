@@ -76,9 +76,9 @@ jobs:
       - name: Obtain csproj to lint
         run: |
           if [[ "${{ steps.exclude-args.outputs.argument }}" != "" ]]; then
-            projects=$(dotnet sln list ${{ inputs.sln-file }} | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
+            projects=$(dotnet sln ${{ inputs.sln-file }} list | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
           else
-            projects=$(dotnet sln list ${{ inputs.sln-file }} | tail -n +3)
+            projects=$(dotnet sln ${{ inputs.sln-file }} list | tail -n +3)
           fi
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
           IFS=" " read -r -a array_projects <<< "${projects//$'\n'/ }"
