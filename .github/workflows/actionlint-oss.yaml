@@ -34,7 +34,7 @@ jobs:
         run: |
           for repository in $(cat "${{ github.workspace }}/repositories.txt"); do
             echo "repository=${repository}" | tee -a "$GITHUB_ENV"
-            git clone --depth 1 "${{ github.repository_owner }}/${repository}" "${repository}""
+            git clone --depth 1 "${{ github.repository_owner }}/${repository}" "${repository}"
           done
       # github workflows/action's Static Checker
       - name: Run actionlint
