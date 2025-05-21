@@ -9,7 +9,7 @@ on:
 
 jobs:
   git-shortsha:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     timeout-minutes: 3
@@ -29,7 +29,7 @@ jobs:
       matrix:
         restore-wasm-workload: ["", "true", "false"]
         skip-env: ["", "true", "false"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     timeout-minutes: 3
@@ -46,7 +46,7 @@ jobs:
         working-directory: sandbox/
 
   to-lower:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     timeout-minutes: 3
