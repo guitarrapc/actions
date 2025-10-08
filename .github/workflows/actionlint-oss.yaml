@@ -21,10 +21,11 @@ jobs:
       repositories: ${{ steps.list.outputs.repositories }}
     steps:
       # gh repo list guitarrapc --visibility public --no-archived --json name
+      # exect Fork
       # except "blog" repository
       - name: List non-archived OSS Repository names as json array
         id: list
-        run: echo "repositories=$(gh repo list ${{ github.repository_owner }} --visibility public --no-archived --json name --jq 'sort_by(.name | ascii_downcase) | map(select(.name != "blog" and .name != "bitnami-containers")) | .[].name' | jq -R -s -c 'split("\n")[:-1]')" | tee -a "$GITHUB_OUTPUT"
+        run: echo "repositories=$(gh repo list ${{ github.repository_owner }} --visibility public --no-archived --json name --jq 'sort_by(.name | ascii_downcase) | map(select(!.isFork and .name != "blog")) | .[].name' | jq -R -s -c 'split("\n")[:-1]')" | tee -a "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Try json parse (Should output as Array)
