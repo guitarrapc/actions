@@ -2,6 +2,7 @@ self-hosted-runner:
   # arm is official hosted-runner but cannot handle with actionlint
   labels:
     - macos-15-intel
+    - macos-26
 
 paths:
   .github/workflows/**/*.{yml,yaml}:
