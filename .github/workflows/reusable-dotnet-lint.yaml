@@ -162,43 +162,45 @@ jobs:
           pr_exists=$(gh pr list --head "auto-pr/dotnet-format" --base "${{ github.event.repository.default_branch}}")
           if [ -n "$pr_exists" ]; then
             echo "PR already exists for auto-pr/dotnet-format -> ${{ github.event.repository.default_branch}}. Skipping creation."
-          else
-            title="[dotnet format] Automated changes"
-            cat << 'EOF' > pr_body.txt
-            ## tl;dr;
-            dotnet format generated changes based on .editorconfig
-
-            ## Stats
-
-            changed directories
-
-            ```
-            ${{ env.CHANGED_DIRS }}
-            ```
-
-            ## Files
-
-            <details>
-            <summary>Click to show.</summary>
-
-            ```
-            ${{ env.CHANGED_FILES }}
-            ```
-
-            </details>
-
-            ## Target Projects
-
-            Target project number is ${{ env.PROJECT_LENGTH }}.
-
-            ${{ env.FORMAT_PROJECTS }}
-
-            ---
-
-            This PR was created automatically via [${{ github.workflow }}]($GITHUB_ACTIONS_RUN_URL), job [link]($GITHUB_ACTIONS_JOB_URL)._
-            EOF
-            gh pr create --title "$title" --body-file ./pr_body.txt" --label "automated pr"
+            exit 0
           fi
+
+          title="[dotnet format] Automated changes"
+          cat << 'EOF' > pr_body.txt
+          ## tl;dr;
+          dotnet format generated changes based on .editorconfig
+
+          ## Stats
+
+          changed directories
+
+          ```
+          ${{ env.CHANGED_DIRS }}
+          ```
+
+          ## Files
+
+          <details>
+          <summary>Click to show.</summary>
+
+          ```
+          ${{ env.CHANGED_FILES }}
+          ```
+
+          </details>
+
+          ## Target Projects
+
+          Target project number is ${{ env.PROJECT_LENGTH }}.
+
+          ${{ env.FORMAT_PROJECTS }}
+
+          ---
+
+          This PR was created automatically via [${{ github.workflow }}]($GITHUB_ACTIONS_RUN_URL), job [link]($GITHUB_ACTIONS_JOB_URL)._
+          EOF
+
+          gh pr create --title "$title" --body-file "./pr_body.txt" --label "automated pr"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTIONS_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
