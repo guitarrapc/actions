@@ -65,21 +65,23 @@ jobs:
         id: exclude-args
         run: |
           exclude_args=""
-          if [[ "${{ inputs.exclude-csprojs }}" != "" ]]; then
-            exclude_csprojs="${{ inputs.exclude-csprojs }}"
+          if [[ "${EXCLUDE_CSPROJS}" != "" ]]; then
+            exclude_csprojs="${EXCLUDE_CSPROJS}"
             IFS=" " read -r -a csprojs <<< "${exclude_csprojs//$'\n'/ }"
             for item in "${csprojs[@]}"; do
               exclude_args+="-v $item ";
             done
           fi
           echo "argument=$exclude_args" | tee -a "$GITHUB_OUTPUT"
+        env:
+          EXCLUDE_CSPROJS: ${{ inputs.exclude-csprojs }}
       # dotnet list
       - name: Obtain csproj to lint
         run: |
           if [[ "${{ steps.exclude-args.outputs.argument }}" != "" ]]; then
-            projects=$(dotnet sln ${{ inputs.sln-file }} list | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
+            projects=$(dotnet sln ${SLN_FILE} list | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
           else
-            projects=$(dotnet sln ${{ inputs.sln-file }} list | tail -n +3)
+            projects=$(dotnet sln ${SLN_FILE} list | tail -n +3)
           fi
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
           IFS=" " read -r -a array_projects <<< "${projects//$'\n'/ }"
@@ -95,6 +97,8 @@ jobs:
             echo "EOF"
           } | tee -a "$GITHUB_ENV"
           echo "PROJECT_LENGTH=${#array_projects[@]}" | tee -a "$GITHUB_ENV"
+        env:
+          SLN_FILE: ${{ inputs.sln-file }}
         working-directory: ${{ inputs.sln-root }}
 
       - name: Add dotnet-format problem matcher
@@ -104,8 +108,8 @@ jobs:
       - name: Dotnet Format
         run: |
           i=0
-          echo "${{ env.PROJECTS }}" | while IFS= read -r csproj; do
-            echo "($((i=i+1))/${{ env.PROJECT_LENGTH }}) formatting csproj '$csproj'."
+          echo "${PROJECTS}" | while IFS= read -r csproj; do
+            echo "($((i=i+1))/${PROJECT_LENGTH}) formatting csproj '$csproj'."
             dotnet format "$csproj" --verbosity diagnostic
           done
         working-directory: ${{ inputs.sln-root }}
