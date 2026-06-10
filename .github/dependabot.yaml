@@ -9,6 +9,8 @@ updates:
       dependencies:
         patterns:
           - "*"
+    cooldown:
+      default-days: 14
     ignore:
       # I just want update action when major/minor version is updated. patch updates are too noisy.
       - dependency-name: "*"

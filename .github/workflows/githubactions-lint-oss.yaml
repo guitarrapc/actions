@@ -25,13 +25,13 @@ jobs:
       # except "blog" repository
       - name: List non-archived OSS Repository names as json array
         id: list
-        run: echo "repositories=$(gh repo list ${{ github.repository_owner }} --visibility public --no-archived --json name,isFork --jq 'sort_by(.name | ascii_downcase) | map(select(.isFork == false and .name != "blog")) | .[].name' | jq -R -s -c 'split("\n")[:-1]')" | tee -a "$GITHUB_OUTPUT"
+        run: echo "repositories=$(gh repo list ${{ github.repository_owner }} --limit 1000 --visibility public --no-archived --json name,isFork --jq 'sort_by(.name | ascii_downcase) | map(select(.isFork == false and .name != "blog")) | .[].name' | jq -R -s -c 'split("\n")[:-1]')" | tee -a "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Try json parse (Should output as Array)
         run: echo "${{ fromJson(steps.list.outputs.repositories) }}"
 
-  actionlint:
+  lint:
     needs: [pre]
     strategy:
       fail-fast: false
@@ -46,37 +46,17 @@ jobs:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           persist-credentials: false
-      - uses: aquaproj/aqua-installer@9ebf656952a20c45a5d66606f083ff34f58b8ce0 # v4.0.0
-        with:
-          aqua_version: v2.43.1
+      - uses: guitarrapc/setup-seiton@92f424f8dae8130d8f6299c74716356437d746ba # v1.0.2
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           persist-credentials: false
           repository: "${{ github.repository_owner }}/${{ matrix.repository }}"
           path: ${{ matrix.repository }}
-      # github workflows/action's Static Checker
-      - name: Run actionlint
+      - name: Run seiton
         run: |
-          if [[ -f .github/actionlint.yaml ]]; then
-            actionlint -color -oneline
+          if [[ -f .github/seiton.yaml ]]; then
+            seiton --oneline --include-actions
           else
-            actionlint -color -oneline --config-file ../.github/actionlint.yaml
-          fi
-        working-directory: ${{ matrix.repository }}
-      # checkout's persist-credentials: false checker
-      - name: Run ghalint
-        run: |
-          if [[ -f .ghalint.yaml ]]; then
-            ghalint run
-          else
-            ghalint -c ../.ghalint.yaml run
-          fi
-        working-directory: ${{ matrix.repository }}
-      - name: Run ghalint
-        run: |
-          if [[ -f .ghalint.yaml ]]; then
-            ghalint run-action
-          else
-            ghalint -c ../.ghalint.yaml run-action
+            seiton --oneline --include-actions --config-file ../.github/seiton.yaml
           fi
         working-directory: ${{ matrix.repository }}

@@ -50,18 +50,20 @@ runs:
     # check by `dotnet workload list`
     - name: Install Wasm workload
       shell: bash
+      if: ${{ inputs.restore-wasm-workload != 'false' }}
       run: |
         echo "::group::Install wasm workload if needed."
           dotnet workload install wasm-tools
 
-          versions=("${{ inputs.dotnet-version }}")
+          versions=("${DOTNET_VERSION}")
           for version in ${versions[@]}; do
             if [[ "$version" == "9.0.x" ]]; then
               dotnet workload install wasm-tools-net8
             fi
           done
         echo "::endgroup::"
-      if: ${{ inputs.restore-wasm-workload != 'false' }}
+      env:
+        DOTNET_VERSION: ${{ inputs.dotnet-version }}
 
     - name: dotnet version
       shell: bash

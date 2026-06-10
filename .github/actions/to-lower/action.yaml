@@ -16,11 +16,13 @@ runs:
   using: "composite"
   steps:
     - name: repository lowercase
-      run: echo "lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       id: repository
+      run: echo "lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: value lowercase
-      run: echo "lowercase=$(echo '${{ inputs.value }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       id: value
+      run: echo "lowercase=${VALUE,,}" >> "$GITHUB_OUTPUT"
       shell: bash
+      env:
+        VALUE: ${{ inputs.value }}
