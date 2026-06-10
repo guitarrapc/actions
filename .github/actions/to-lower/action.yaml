@@ -22,7 +22,7 @@ runs:
 
     - name: value lowercase
       id: value
-      run: echo "lowercase=$(echo '${VALUE}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+      run: echo "lowercase=$(echo "${VALUE}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       shell: bash
       env:
         VALUE: ${{ inputs.value }}
