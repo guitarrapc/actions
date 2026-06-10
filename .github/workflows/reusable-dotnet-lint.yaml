@@ -61,28 +61,26 @@ jobs:
           dotnet-version: ${{ inputs.dotnet-version }}
           restore-wasm-workload: "true"
 
-      - name: Create excludes arguments
-        id: exclude-args
-        run: |
-          exclude_args=""
-          if [[ "${EXCLUDE_CSPROJS}" != "" ]]; then
-            exclude_csprojs="${EXCLUDE_CSPROJS}"
-            IFS=" " read -r -a csprojs <<< "${exclude_csprojs//$'\n'/ }"
-            for item in "${csprojs[@]}"; do
-              exclude_args+="-v $item ";
-            done
-          fi
-          echo "argument=$exclude_args" | tee -a "$GITHUB_OUTPUT"
-        env:
-          EXCLUDE_CSPROJS: ${{ inputs.exclude-csprojs }}
       # dotnet list
       - name: Obtain csproj to lint
         run: |
-          if [[ "${{ steps.exclude-args.outputs.argument }}" != "" ]]; then
-            projects=$(dotnet sln ${SLN_FILE} list | tail -n +3 | grep ${{ steps.exclude-args.outputs.argument }})
-          else
-            projects=$(dotnet sln ${SLN_FILE} list | tail -n +3)
+          grep_args=()
+
+          if [[ -n "${EXCLUDE_CSPROJS}" ]]; then
+            IFS=" " read -r -a csprojs <<< "${EXCLUDE_CSPROJS//$'\n'/ }"
+
+            grep_args=(-v)
+            for item in "${csprojs[@]}"; do
+              grep_args+=(-e "$item")
+            done
           fi
+
+          if [[ ${#grep_args[@]} -gt 0 ]]; then
+            projects=$(dotnet sln "${SLN_FILE}" list | tail -n +3 | grep "${grep_args[@]}")
+          else
+            projects=$(dotnet sln "${SLN_FILE}" list | tail -n +3)
+          fi
+
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
           IFS=" " read -r -a array_projects <<< "${projects//$'\n'/ }"
 
@@ -91,16 +89,18 @@ jobs:
             echo "${projects}"
             echo "EOF"
           } | tee -a "$GITHUB_ENV"
+
           {
             echo "FORMAT_PROJECTS<<EOF"
             echo "${format_projects}"
             echo "EOF"
           } | tee -a "$GITHUB_ENV"
+
           echo "PROJECT_LENGTH=${#array_projects[@]}" | tee -a "$GITHUB_ENV"
         env:
           SLN_FILE: ${{ inputs.sln-file }}
+          EXCLUDE_CSPROJS: ${{ inputs.exclude-csprojs }}
         working-directory: ${{ inputs.sln-root }}
-
       - name: Add dotnet-format problem matcher
         uses: xt0rted/dotnet-format-problem-matcher@b90c4f18e3daa4f8fd266e41eba4f351b2e00b75 # v1.2.0
 
