@@ -100,10 +100,10 @@ discovery:
 
 fix:
   defaults:
-    # job-timeout-minutes: 15
+    job-timeout-minutes: 15
   pinning:
-    # enable-network: false
-    # min-age-days: 14
+    enable-network: true
+    min-age-days: 0
     # exclude-branches:
     #   - main
     #   - master
@@ -111,7 +111,7 @@ fix:
     #   - uses: "slsa-framework/*"
     #     ref: "*"
   images:
-    # enable-network: false
+    enable-network: true
     # exclude-images:
     #   - scratch
     # exclude-tags:
@@ -120,8 +120,8 @@ fix:
     #   - mcr.microsoft.com/**
 
 network:
-  # on-error: skip
-  # timeout-seconds: 30
+  on-error: skip
+  timeout-seconds: 30
   # max-concurrency: (omit; default is min(4, logical CPUs))
   # github:
   #   ghes-api-url: ""
