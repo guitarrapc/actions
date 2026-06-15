@@ -75,10 +75,14 @@ jobs:
             done
           fi
 
+          if [[ -n "$SLN_FILE" ]]; then
+            sln_args+=("$SLN_FILE")
+          fi
+
           if [[ ${#grep_args[@]} -gt 0 ]]; then
-            projects=$(dotnet sln "${SLN_FILE}" list | tail -n +3 | grep "${grep_args[@]}")
+            projects=$(dotnet sln "${sln_args[@]}" list | tail -n +3 | grep "${grep_args[@]}")
           else
-            projects=$(dotnet sln "${SLN_FILE}" list | tail -n +3)
+            projects=$(dotnet sln "${sln_args[@]}" list | tail -n +3)
           fi
 
           format_projects=$(echo "$projects" | sort | xargs -n 1 echo '  *')
