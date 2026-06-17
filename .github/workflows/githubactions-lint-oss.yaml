@@ -57,6 +57,6 @@ jobs:
           if [[ -f .github/seiton.yaml ]]; then
             seiton --oneline --include-actions
           else
-            seiton --oneline --include-actions --config-file ../.github/seiton.yaml
+            seiton --oneline --include-actions --config ../.github/seiton.yaml
           fi
         working-directory: ${{ matrix.repository }}
