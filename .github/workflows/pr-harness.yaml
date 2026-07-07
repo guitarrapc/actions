@@ -67,3 +67,12 @@ jobs:
           allow-licenses: Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MIT, MPL-2.0
           license-check: true
           vulnerability-check: true
+
+  pr-harness-check:
+    needs: [prevent-githubactions-changes, dependency-review]
+    permissions: {}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: "Pass"
+        run: echo "PR Harness checks passed."
