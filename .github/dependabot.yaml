@@ -2,7 +2,12 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - ".github/actions/create-release"
+      - ".github/actions/git-shortsha"
+      - ".github/actions/setup-dotnet"
+      - ".github/actions/to-lower"
     schedule:
       interval: "weekly" # Check for updates to GitHub Actions every week
     groups:
