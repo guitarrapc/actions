@@ -150,8 +150,9 @@ jobs:
             echo "EOF"
           } | tee -a "$GITHUB_ENV"
 
-      # Commit if change happen, then craete PR. force push when branch/pr already exists.
-      - name: commit
+      # Commit if changes happened, then create a PR. Force push when the branch/PR already exists.
+      - name: Commit and push formatted files
+        if: ${{ steps.git-check.outputs.modified == 'true' }}
         run: |
           git remote set-url origin "https://github-actions:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
           git config user.name github-actions[bot]
