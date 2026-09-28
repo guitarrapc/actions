@@ -48,17 +48,20 @@ runs:
       if: ${{ inputs.skip-env == 'false' }}
 
     # check by `dotnet workload list`
+    # --skip-manifest-update: Windows and macOS runner images come with MAUI/iOS/Android workloads installed.
+    # Without the flag, `dotnet workload install` first moves the workload set to the latest version and then
+    # reinstalls every installed workload to match it, which adds several minutes on those runners.
     - name: Install Wasm workload
       shell: bash
       if: ${{ inputs.restore-wasm-workload != 'false' }}
       run: |
         echo "::group::Install wasm workload if needed."
-          dotnet workload install wasm-tools
+          dotnet workload install wasm-tools --skip-manifest-update
 
           versions=("${DOTNET_VERSION}")
           for version in ${versions[@]}; do
             if [[ "$version" == "9.0.x" ]]; then
-              dotnet workload install wasm-tools-net8
+              dotnet workload install wasm-tools-net8 --skip-manifest-update
             fi
           done
         echo "::endgroup::"
