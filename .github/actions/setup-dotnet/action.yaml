@@ -23,10 +23,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Windows + wasm workload: install the SDK outside Program Files.
+    # The preinstalled SDK there manages workloads with MSIs and carries Visual Studio's MAUI/iOS/Android
+    # workloads, so every `dotnet workload install` also installs whatever packs those workloads are missing,
+    # which adds several minutes. An SDK under runner.temp sees no VS workloads and installs packs as files.
     - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
         dotnet-quality: ${{ inputs.dotnet-quality }}
+      env:
+        DOTNET_INSTALL_DIR: ${{ (runner.os == 'Windows' && inputs.restore-wasm-workload != 'false') && format('{0}\dotnet', runner.temp) || '' }}
 
     # see: https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables
     # GitHub Actions Hosted Runner default environment contains some .NET Environment.
