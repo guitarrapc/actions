@@ -37,7 +37,12 @@ jobs:
             10.0.x
             8.0.x
       - name: dotnet workload list
-        run: dotnet workload list
+        shell: bash
+        run: |
+          command -v dotnet
+          echo "DOTNET_ROOT=$DOTNET_ROOT"
+          dotnet --list-sdks
+          dotnet workload list
       # AOT publish goes through the Emscripten toolchain, so this proves the installed wasm-tools actually works.
       - name: Publish blazorwasm with AOT
         shell: bash
