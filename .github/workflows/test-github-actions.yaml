@@ -45,6 +45,35 @@ jobs:
         run: dotnet build
         working-directory: sandbox/
 
+  # Windows installs the SDK under runner.temp when the wasm workload is requested, so the workload
+  # skips the Visual Studio MAUI/iOS/Android workloads that the Program Files SDK drags along.
+  setup-dotnet-wasm-windows:
+    runs-on: windows-2025
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          restore-wasm-workload: true
+      - name: dotnet resolves to the SDK under runner.temp
+        shell: bash
+        run: |
+          expected="$(cygpath -u "$RUNNER_TEMP")/dotnet"
+          actual="$(dirname "$(command -v dotnet)")"
+          echo "expected=$expected actual=$actual DOTNET_ROOT=$DOTNET_ROOT"
+          [[ "$actual" == "$expected" ]]
+          [[ "$(cygpath -u "$DOTNET_ROOT")" == "$expected" ]]
+      - name: wasm-tools is installed
+        shell: bash
+        run: dotnet workload list | grep -E '^wasm-tools[[:space:]]'
+      - name: dotnet build
+        run: dotnet build
+        working-directory: sandbox/
+
   to-lower:
     runs-on: ubuntu-24.04
     permissions:
