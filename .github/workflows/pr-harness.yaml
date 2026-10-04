@@ -1,9 +1,35 @@
 name: PR Harness
 
 on:
-  workflow_call:
   pull_request:
     branches: ["main"]
+  workflow_call:
+    inputs:
+      license-check:
+        description: "Run ol license policy check with resolved package-manager inputs."
+        required: false
+        default: false
+        type: boolean
+      allow-licenses:
+        description: "Comma-separated SPDX License Identifiers allowed by ol."
+        required: false
+        default: "Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0"
+        type: string
+      allow-dev-licenses:
+        description: "Comma-separated SPDX License Identifiers additionally allowed for proven development-only dependencies."
+        required: false
+        default: ""
+        type: string
+      additional-license-baseline-paths:
+        description: "Newline-separated additional committed ol baselines applied before the optional repository ol-baseline.json."
+        required: false
+        default: ""
+        type: string
+      exclude-license-input-paths:
+        description: "Newline-separated repository files or directories excluded from package-manager discovery and ol input discovery."
+        required: false
+        default: ""
+        type: string
 
 jobs:
   prevent-githubactions-changes:
@@ -64,12 +90,146 @@ jobs:
       - name: "Dependency Review"
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # 5.0.0
         with:
-          allow-licenses: Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MIT, MPL-2.0
+          allow-licenses: ${{ inputs.allow-licenses || 'Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0' }}
           license-check: true
           vulnerability-check: true
 
+  license-check:
+    permissions:
+      contents: read
+    env:
+      ALLOW_LICENSES: ${{ inputs.allow-licenses || 'Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+        working-directory: repo
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: true
+          path: repo
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          repository: guitarrapc/actions
+          path: Actions
+      - name: "Initialize license check paths"
+        run: |
+          ol_work_dir="$RUNNER_TEMP/ol-license-check"
+          {
+            echo "OL_WORK_DIR=$ol_work_dir"
+            echo "OL_REPORT_PATH=$ol_work_dir/ol-report.json"
+            echo "OL_SARIF_PATH=$ol_work_dir/ol.sarif"
+            echo "OL_EVIDENCE_CACHE_DIR=$ol_work_dir/cache"
+            echo "OL_DOTNET_SLNX_LIST=$ol_work_dir/dotnet-slnx.txt"
+            echo "OL_DOTNET_SLN_LIST=$ol_work_dir/dotnet-sln.txt"
+            echo "OL_DOTNET_PROJECT_LIST=$ol_work_dir/dotnet-projects.txt"
+          } >> "$GITHUB_ENV"
+      - name: "Validate license check inputs"
+        run: |
+          if [[ -z "$ALLOW_LICENSES" ]]; then
+            echo "::error::allow-licenses is required when license-check is true."
+            exit 1
+          fi
+      - name: "Discover package-manager manifests"
+        id: license-inputs
+        shell: bash
+        env:
+          EXCLUDED_INPUT_PATHS: ${{ inputs.exclude-license-input-paths }}
+        run: |
+          : > "$OL_DOTNET_SLNX_LIST"
+          : > "$OL_DOTNET_SLN_LIST"
+          : > "$OL_DOTNET_PROJECT_LIST"
+
+          pathspecs=()
+          while IFS= read -r excluded || [[ -n "$excluded" ]]; do
+            excluded="${excluded%$'\r'}"
+            excluded="${excluded#./}"
+            excluded="${excluded%/}"
+            [[ -z "$excluded" ]] && continue
+            if [[ "$excluded" == "." ]]; then
+              pathspecs+=(':(top,exclude,glob)**')
+            else
+              pathspecs+=(":(top,exclude,literal)$excluded")
+            fi
+          done <<< "$EXCLUDED_INPUT_PATHS"
+
+          while IFS= read -r -d '' path; do
+            case "$path" in
+              *.slnx) printf '%s\n' "$path" >> "$OL_DOTNET_SLNX_LIST" ;;
+              *.sln) printf '%s\n' "$path" >> "$OL_DOTNET_SLN_LIST" ;;
+              *.csproj) printf '%s\n' "$path" >> "$OL_DOTNET_PROJECT_LIST" ;;
+            esac
+          done < <(git ls-files -z -- "${pathspecs[@]}")
+
+          if [[ -s "$OL_DOTNET_SLNX_LIST" || -s "$OL_DOTNET_SLN_LIST" || -s "$OL_DOTNET_PROJECT_LIST" ]]; then
+            echo "dotnet=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dotnet=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
+        if: ${{ steps.license-inputs.outputs.dotnet == 'true' }}
+      - name: "Restore .NET dependencies"
+        if: ${{ steps.license-inputs.outputs.dotnet == 'true' }}
+        shell: bash
+        run: |
+          solution_input_list="$OL_DOTNET_SLNX_LIST"
+          if [[ ! -s "$solution_input_list" ]]; then
+            solution_input_list="$OL_DOTNET_SLN_LIST"
+          fi
+          # Restore solutions first, then projects whose assets are still missing.
+          for input_list in "$solution_input_list" "$OL_DOTNET_PROJECT_LIST"; do
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+              if [[ "$input_list" == "$OL_DOTNET_PROJECT_LIST" && -f "$(dirname "$path")/obj/project.assets.json" ]]; then
+                continue
+              fi
+              echo "::group::dotnet restore $path"
+              dotnet restore "$path"
+              echo "::endgroup::"
+            done < "$input_list"
+          done
+      - uses: guitarrapc/setup-ol@3128c4908a32378c0775f12c4a9dfe6c8c8c3f07 # v1.0.0
+      - name: "Unpack ol evidence cache"
+        run: ol cache unpack "$GITHUB_WORKSPACE/Actions/ol-cache.olcache" --cache-dir "$OL_EVIDENCE_CACHE_DIR"
+      - name: "Scan license evidence"
+        env:
+          EXCLUDED_INPUT_PATHS: ${{ inputs.exclude-license-input-paths }}
+          OL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          scan_args=(--input .)
+          while IFS= read -r excluded_path || [[ -n "$excluded_path" ]]; do
+            excluded_path="${excluded_path%$'\r'}"
+            [[ -z "$excluded_path" ]] && continue
+            scan_args+=(--exclude-input-path "$excluded_path")
+          done <<< "$EXCLUDED_INPUT_PATHS"
+          ol scan "${scan_args[@]}" --cache-dir "$OL_EVIDENCE_CACHE_DIR" --format json > "$OL_REPORT_PATH"
+      - name: "Check license policy"
+        env:
+          ADDITIONAL_BASELINE_PATHS: ${{ inputs.additional-license-baseline-paths }}
+          ALLOW_DEV_LICENSES: ${{ inputs.allow-dev-licenses }}
+        run: |
+          check_args=(--report "$OL_REPORT_PATH" --allow-licenses "$ALLOW_LICENSES" --sarif "$OL_SARIF_PATH")
+          while IFS= read -r baseline_path || [[ -n "$baseline_path" ]]; do
+            baseline_path="${baseline_path%$'\r'}"
+            [[ -z "$baseline_path" ]] && continue
+            check_args+=(--baseline "$baseline_path")
+          done <<< "$ADDITIONAL_BASELINE_PATHS"
+
+          # The shared baseline is optional; explicitly supplied baselines are validated by ol.
+          if [[ -f "../Actions/ol-baseline.json" ]]; then
+            check_args+=(--baseline "../Actions/ol-baseline.json")
+          fi
+          if [[ -n "$ALLOW_DEV_LICENSES" ]]; then
+            check_args+=(--allow-dev-licenses "$ALLOW_DEV_LICENSES")
+          fi
+          ol check "${check_args[@]}" --format markdown | tee -a "$GITHUB_STEP_SUMMARY"
+
   pr-harness-check:
-    needs: [prevent-githubactions-changes, dependency-review]
+    needs: [prevent-githubactions-changes, dependency-review, license-check]
     permissions: {}
     runs-on: ubuntu-24.04
     timeout-minutes: 3
