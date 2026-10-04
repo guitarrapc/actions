@@ -119,6 +119,7 @@ jobs:
       - name: "Initialize license check paths"
         run: |
           ol_work_dir="$RUNNER_TEMP/ol-license-check"
+          mkdir -p "$ol_work_dir"
           {
             echo "OL_WORK_DIR=$ol_work_dir"
             echo "OL_REPORT_PATH=$ol_work_dir/ol-report.json"
@@ -194,7 +195,14 @@ jobs:
           done
       - uses: guitarrapc/setup-ol@3128c4908a32378c0775f12c4a9dfe6c8c8c3f07 # v1.0.0
       - name: "Unpack ol evidence cache"
-        run: ol cache unpack "$GITHUB_WORKSPACE/Actions/ol-cache.olcache" --cache-dir "$OL_EVIDENCE_CACHE_DIR"
+        run: |
+          # The shared evidence cache is optional; without it ol scan collects evidence from scratch.
+          cache_archive="$GITHUB_WORKSPACE/Actions/ol-cache.olcache"
+          if [[ ! -f "$cache_archive" ]]; then
+            echo "No shared ol evidence cache found, skipping unpack."
+            exit 0
+          fi
+          ol cache unpack "$cache_archive" --cache-dir "$OL_EVIDENCE_CACHE_DIR"
       - name: "Scan license evidence"
         env:
           EXCLUDED_INPUT_PATHS: ${{ inputs.exclude-license-input-paths }}
