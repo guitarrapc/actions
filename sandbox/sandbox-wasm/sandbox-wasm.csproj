@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!-- restore-dotnet's workload fixture, outside sandbox.slnx so nothing builds it. An Emscripten setting makes restore
+       need the wasm-tools workload, which the runner's SDK lacks until restore-dotnet restores it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EmccInitialHeapSize>67108864</EmccInitialHeapSize>
+  </PropertyGroup>
+
+</Project>

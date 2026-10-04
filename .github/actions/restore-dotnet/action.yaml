@@ -1,5 +1,5 @@
 name: Restore .NET dependencies
-description: Restore .NET solutions and projects so obj/project.assets.json exists for dependency tools such as ol. Does nothing when no .NET solution or project is tracked.
+description: Restore .NET solutions and projects so obj/project.assets.json exists for dependency tools such as ol. Restores the .NET workloads a solution or project needs, such as wasm-tools, only when its restore fails for lack of them. Does nothing when no .NET solution or project is tracked.
 inputs:
   working-directory:
     description: "Directory to discover and restore tracked .NET solutions and projects in."
@@ -67,6 +67,23 @@ runs:
       env:
         LIST_DIR: ${{ runner.temp }}/restore-dotnet
       run: |
+        # A project that needs a workload the SDK lacks fails restore with NETSDK1147, as WebAssembly projects using
+        # Emscripten settings or AOT do without wasm-tools. Only then are the workloads it needs restored and the restore
+        # retried, so a repository without such projects never installs or updates a workload.
+        restore() {
+          local log
+          log="$(mktemp)"
+          if dotnet restore "$1" 2>&1 | tee "$log"; then
+            return 0
+          fi
+          if ! grep -q 'NETSDK1147' "$log"; then
+            return 1
+          fi
+          echo "::notice::$1 needs .NET workloads the SDK lacks, running dotnet workload restore."
+          dotnet workload restore "$1"
+          dotnet restore "$1"
+        }
+
         solution_list="$LIST_DIR/slnx.txt"
         if [[ ! -s "$solution_list" ]]; then
           solution_list="$LIST_DIR/sln.txt"
@@ -79,7 +96,7 @@ runs:
               continue
             fi
             echo "::group::dotnet restore $path"
-            dotnet restore "$path"
+            restore "$path"
             echo "::endgroup::"
           done < "$list"
         done

@@ -78,7 +78,8 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-    timeout-minutes: 5
+    # Restoring the wasm-tools workload for sandbox/sandbox-wasm takes a few minutes.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -101,6 +102,11 @@ jobs:
         run: |
           [[ "$RESTORED" == "true" ]]
           [[ -f sandbox/sandbox-console/obj/project.assets.json ]]
+      # sandbox-wasm fails a plain restore with NETSDK1147 until wasm-tools is installed.
+      - name: A project that needs a workload is restored with it
+        run: |
+          [[ -f sandbox/sandbox-wasm/obj/project.assets.json ]]
+          dotnet workload list | grep -E '^wasm-tools[[:space:]]'
 
   to-lower:
     runs-on: ubuntu-24.04
