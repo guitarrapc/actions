@@ -118,7 +118,7 @@ jobs:
         with:
           working-directory: repo
           exclude-paths: ${{ inputs.exclude-license-input-paths }}
-      - uses: guitarrapc/setup-ol/check@v1.1.0
+      - uses: guitarrapc/setup-ol/check@bf8315c40ac48c437b414e7582b30675eb02723c # v1.1.1
         with:
           working-directory: repo
           allow-licenses: ${{ inputs.allow-licenses || 'Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0' }}
