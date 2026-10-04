@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "version": "0.9.6.0"
+  },
+  "spdx": {
+    "licenseListVersion": "e4c1f27"
+  },
+  "acknowledged": [
+    {
+      "ecosystem": "nuget",
+      "name": "Microsoft.NETCore.Platforms",
+      "version": "1.1.0",
+      "purl": "pkg:nuget/Microsoft.NETCore.Platforms@1.1.0",
+      "status": "unknown",
+      "evidence": [
+        {
+          "source": "nuget-registry",
+          "kind": "license",
+          "raw": "",
+          "declaredLicenseReferenceKind": "location",
+          "declaredLicenseReference": "http://go.microsoft.com/fwlink/?LinkId=329770"
+        },
+        {
+          "source": "source-repository",
+          "kind": "unsupported",
+          "raw": "https://dot.net/"
+        }
+      ],
+      "fingerprint": "f3808e9f7497105bf3dccaf655950ad5605ec8bb64502c46bb5396615af573dc"
+    },
+    {
+      "ecosystem": "nuget",
+      "name": "Microsoft.VisualStudio.Azure.Containers.Tools.Targets",
+      "version": "1.23.0",
+      "purl": "pkg:nuget/Microsoft.VisualStudio.Azure.Containers.Tools.Targets@1.23.0",
+      "status": "unknown",
+      "evidence": [
+        {
+          "source": "nuget-registry",
+          "kind": "license",
+          "raw": "",
+          "declaredLicenseReferenceKind": "artifact-path",
+          "declaredLicenseReference": "EULA.md"
+        },
+        {
+          "source": "package-artifact",
+          "kind": "license",
+          "raw": ""
+        },
+        {
+          "source": "source-repository",
+          "kind": "unsupported",
+          "raw": "https://aka.ms/vscontainertools"
+        }
+      ],
+      "fingerprint": "90282724e22b020923bb4e24b055708197e9c68614beed7b095f3bd3ffb1e1ad"
+    }
+  ]
+}
