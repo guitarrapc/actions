@@ -1,0 +1,85 @@
+name: Restore .NET dependencies
+description: Restore .NET solutions and projects so obj/project.assets.json exists for dependency tools such as ol. Does nothing when no .NET solution or project is tracked.
+inputs:
+  working-directory:
+    description: "Directory to discover and restore tracked .NET solutions and projects in."
+    required: false
+    default: "."
+  exclude-paths:
+    description: "Newline-separated files or directories excluded from discovery, relative to working-directory."
+    required: false
+    default: ""
+outputs:
+  restored:
+    description: "true when .NET solutions or projects were found and restored."
+    value: ${{ steps.discover.outputs.restored }}
+runs:
+  using: "composite"
+  steps:
+    - name: Discover .NET solutions and projects
+      id: discover
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        EXCLUDE_PATHS: ${{ inputs.exclude-paths }}
+        LIST_DIR: ${{ runner.temp }}/restore-dotnet
+      run: |
+        mkdir -p "$LIST_DIR"
+        : > "$LIST_DIR/slnx.txt"
+        : > "$LIST_DIR/sln.txt"
+        : > "$LIST_DIR/projects.txt"
+
+        pathspecs=(.)
+        while IFS= read -r excluded || [[ -n "$excluded" ]]; do
+          excluded="${excluded%$'\r'}"
+          excluded="${excluded#./}"
+          excluded="${excluded%/}"
+          [[ -z "$excluded" ]] && continue
+          if [[ "$excluded" == "." ]]; then
+            pathspecs+=(':(exclude,glob)**')
+          else
+            pathspecs+=(":(exclude,literal)$excluded")
+          fi
+        done <<< "$EXCLUDE_PATHS"
+
+        while IFS= read -r -d '' path; do
+          case "$path" in
+            *.slnx) printf '%s\n' "$path" >> "$LIST_DIR/slnx.txt" ;;
+            *.sln) printf '%s\n' "$path" >> "$LIST_DIR/sln.txt" ;;
+            *.csproj) printf '%s\n' "$path" >> "$LIST_DIR/projects.txt" ;;
+          esac
+        done < <(git ls-files -z -- "${pathspecs[@]}")
+
+        if [[ -s "$LIST_DIR/slnx.txt" || -s "$LIST_DIR/sln.txt" || -s "$LIST_DIR/projects.txt" ]]; then
+          echo "restored=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "No .NET solution or project found, skipping restore."
+          echo "restored=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
+      if: ${{ steps.discover.outputs.restored == 'true' }}
+
+    - name: Restore .NET dependencies
+      if: ${{ steps.discover.outputs.restored == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        LIST_DIR: ${{ runner.temp }}/restore-dotnet
+      run: |
+        solution_list="$LIST_DIR/slnx.txt"
+        if [[ ! -s "$solution_list" ]]; then
+          solution_list="$LIST_DIR/sln.txt"
+        fi
+        # Restore solutions first, then projects whose assets are still missing.
+        for list in "$solution_list" "$LIST_DIR/projects.txt"; do
+          while IFS= read -r path; do
+            [[ -z "$path" ]] && continue
+            if [[ "$list" == "$LIST_DIR/projects.txt" && -f "$(dirname "$path")/obj/project.assets.json" ]]; then
+              continue
+            fi
+            echo "::group::dotnet restore $path"
+            dotnet restore "$path"
+            echo "::endgroup::"
+          done < "$list"
+        done

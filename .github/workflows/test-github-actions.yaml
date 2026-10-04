@@ -74,6 +74,34 @@ jobs:
         run: dotnet build
         working-directory: sandbox/
 
+  restore-dotnet:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/restore-dotnet
+        id: excluded
+        with:
+          exclude-paths: sandbox/
+      - name: Excluded projects are not restored
+        env:
+          RESTORED: ${{ steps.excluded.outputs.restored }}
+        run: |
+          [[ "$RESTORED" == "false" ]]
+          [[ ! -f sandbox/sandbox-console/obj/project.assets.json ]]
+      - uses: ./.github/actions/restore-dotnet
+        id: restore
+      - name: Projects are restored
+        env:
+          RESTORED: ${{ steps.restore.outputs.restored }}
+        run: |
+          [[ "$RESTORED" == "true" ]]
+          [[ -f sandbox/sandbox-console/obj/project.assets.json ]]
+
   to-lower:
     runs-on: ubuntu-24.04
     permissions:
