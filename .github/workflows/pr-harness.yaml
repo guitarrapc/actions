@@ -95,6 +95,8 @@ jobs:
           vulnerability-check: true
 
   license-check:
+    # Callers opt in with the license-check input; this repository's own PRs always run it to exercise the job.
+    if: ${{ inputs.license-check || github.repository == 'guitarrapc/actions' }}
     permissions:
       contents: read
     env:
@@ -237,10 +239,17 @@ jobs:
           ol check "${check_args[@]}" --format markdown | tee -a "$GITHUB_STEP_SUMMARY"
 
   pr-harness-check:
+    # Run even when optional checks are skipped, then fail explicitly on any failed or cancelled check.
+    if: ${{ !cancelled() }}
     needs: [prevent-githubactions-changes, dependency-review, license-check]
     permissions: {}
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:
+      - name: "Fail on failed checks"
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "::error::One or more PR Harness checks failed or were cancelled."
+          exit 1
       - name: "Pass"
         run: echo "PR Harness checks passed."
