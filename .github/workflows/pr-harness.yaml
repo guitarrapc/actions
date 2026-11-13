@@ -8,7 +8,7 @@ on:
       license-check:
         description: "Run ol license policy check with resolved package-manager inputs."
         required: false
-        default: false
+        default: true
         type: boolean
       allow-licenses:
         description: "Comma-separated SPDX License Identifiers allowed by ol."
