@@ -5,9 +5,8 @@ inputs:
     description: "Optional SDK version(s) to use. If not provided, will install global.json version when available. Examples: 2.2.104, 3.1, 3.1.x, 3.x"
     required: false
     default: |
-      8.0.x
-      9.0.x
       10.0.x
+      11.0.x
   dotnet-quality:
     description: "Optional quality of the build. The possible values are: daily, signed, validated, preview, ga."
     required: false
@@ -63,8 +62,8 @@ runs:
 
           versions=("${DOTNET_VERSION}")
           for version in ${versions[@]}; do
-            if [[ "$version" == "9.0.x" ]]; then
-              dotnet workload install wasm-tools-net8
+            if [[ "$version" == "10.0.x" ]]; then
+              dotnet workload install wasm-tools-net10
             fi
           done
         echo "::endgroup::"
